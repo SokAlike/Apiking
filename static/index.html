@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>apex pulse · ai signals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 10% 20%, #0a1120, #030614);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+        .neo-card {
+            background: rgba(8, 16, 30, 0.75);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(64, 128, 255, 0.12);
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 255, 255, 0.05) inset;
+            border-radius: 40px;
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .top-bar {
+            background: rgba(5, 15, 30, 0.6);
+            border-bottom: 1px solid rgba(0, 200, 255, 0.15);
+            border-radius: 40px 40px 0 0;
+            padding: 1rem 1.2rem;
+        }
+        .search-float {
+            background: rgba(2, 10, 22, 0.7);
+            border: 1.5px solid rgba(0, 180, 255, 0.2);
+            border-radius: 48px;
+            transition: all 0.15s ease;
+            padding: 0.4rem 1rem 0.4rem 1.5rem;
+        }
+        .search-float:focus-within {
+            border-color: #2af;
+            box-shadow: 0 0 0 3px rgba(34, 170, 255, 0.2);
+        }
+        .asset-tile {
+            background: rgba(12, 22, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: 0.2s ease;
+            backdrop-filter: blur(6px);
+        }
+        .asset-tile:hover {
+            background: rgba(22, 40, 70, 0.9);
+            border-color: #2af;
+            transform: scale(1.01);
+            box-shadow: 0 10px 20px -12px #2af;
+        }
+        .asset-tile.selected {
+            background: linear-gradient(135deg, #0a2942, #0f3552);
+            border-left: 4px solid #2af;
+            border-radius: 20px 12px 12px 20px;
+        }
+        .signal-chip {
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.4px;
+            background: linear-gradient(145deg, #0f2a3f, #0d1f30);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,215,0,0.2);
+            display: inline-block;
+        }
+        .signal-chip.call {
+            background: linear-gradient(145deg, #0f4c3a, #0b3b2b);
+            color: #b0ffd0;
+            border-color: #00d4a0;
+        }
+        .signal-chip.put {
+            background: linear-gradient(145deg, #601830, #4a1226);
+            color: #ffb0c0;
+            border-color: #ff4d6d;
+        }
+        .signal-chip.neutral {
+            background: #2a374b;
+            color: #ccddee;
+        }
+        .bar-bg {
+            background: #1e2b40;
+            border-radius: 20px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            background: linear-gradient(90deg, #0af, #5f6cff);
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+        }
+        .live-badge {
+            background: #0e223a;
+            border: 1px solid #2af;
+            border-radius: 100px;
+            padding: 0.4rem 1.2rem;
+            font-size: 0.8rem;
+            color: #bfd9ff;
+            white-space: nowrap;
+        }
+        .candle-orbit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #0b1729;
+            padding: 0.8rem 1rem;
+            border-radius: 60px;
+            border: 1px solid #2a4f80;
+            box-shadow: 0 10px 20px -5px rgba(0,170,255,0.15);
+            flex-wrap: wrap;
+        }
+        .orbit-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .orbit-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f9fcc;
+            font-weight: 500;
+        }
+        .orbit-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            font-family: 'Plus Jakarta Sans', monospace;
+            background: linear-gradient(135deg, #fff, #bfd9ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.2;
+        }
+        .candle-core {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 170, 255, 0.08);
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            border: 1px dashed rgba(0, 170, 255, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        .candle-symbol {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .candle-sphere {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #2af;
+            box-shadow: 0 0 20px #2af;
+        }
+        .candle-sphere.bear {
+            background: #ff4d6d;
+            box-shadow: 0 0 20px #ff4d6d;
+        }
+        .candle-sphere.bull {
+            background: #2af;
+            box-shadow: 0 0 20px #2af;
+        }
+        .candle-line {
+            width: 30px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #2af, #5f6cff, transparent);
+        }
+        .tg-pill {
+            background: #0f2440;
+            border-radius: 60px;
+            padding: 0.4rem 1.2rem;
+            border: 1px solid #2af;
+            color: white;
+            transition: 0.1s;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+        .tg-pill:hover {
+            background: #1b3557;
+        }
+        .gen-btn {
+            background: linear-gradient(135deg, #0055ff, #0066cc);
+            border: none;
+            border-radius: 32px;
+            padding: 1rem 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            box-shadow: 0 15px 30px -10px #0066ff80;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+        .gen-btn:hover {
+            background: linear-gradient(135deg, #0066ff, #0077ee);
+            transform: scale(1.02);
+        }
+        .gen-btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .gen-btn.loading {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+        .spinner-blue {
+            border: 3px solid rgba(0,170,255,0.2);
+            border-top: 3px solid #2af;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+        .scroll-modern::-webkit-scrollbar { width: 5px; }
+        .scroll-modern::-webkit-scrollbar-track { background: #0f1a2a; border-radius: 20px; }
+        .scroll-modern::-webkit-scrollbar-thumb { background: #2a4f80; border-radius: 20px; }
+        .lock-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 8, 20, 0.96);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .lock-card {
+            background: #0b1428;
+            border: 1px solid #2af;
+            border-radius: 48px;
+            max-width: 380px;
+            width: 90%;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 30px 50px -20px #000, 0 0 0 2px rgba(0,170,255,0.2) inset;
+        }
+        .vip-link {
+            background: #1f3b5c;
+            padding: 0.7rem;
+            border-radius: 60px;
+            display: inline-block;
+            margin: 1.2rem 0;
+            color: white;
+            font-weight: bold;
+            transition: 0.2s;
+            border: 1px solid #2af;
+            text-decoration: none;
+        }
+        .vip-link:hover { background: #2a5580; transform: scale(1.02); }
+        .password-input {
+            background: #07122a;
+            border: 1px solid #2a4f80;
+            border-radius: 60px;
+            padding: 0.8rem 1rem;
+            width: 100%;
+            color: white;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .unlock-btn {
+            background: linear-gradient(135deg, #2a6faf, #0e4a8a);
+            border-radius: 60px;
+            width: 100%;
+            margin-top: 1rem;
+            font-weight: bold;
+            color: white;
+            padding: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .unlock-btn:hover { transform: scale(1.02); opacity: 0.9; }
+        .unlock-btn.loading { opacity: 0.7; transform: scale(0.98); }
+        @media (max-width: 768px) {
+            body { padding: 0.3rem; }
+            .top-bar { padding: 0.8rem 1rem; }
+            .top-bar .text-2xl { font-size: 1.5rem; }
+            .live-badge { padding: 0.3rem 0.8rem; font-size: 0.7rem; }
+            .asset-tile { padding: 10px 12px; }
+            .asset-tile .text-base { font-size: 0.9rem; }
+            .asset-tile .text-xs { font-size: 0.7rem; }
+            .candle-orbit { gap: 8px; }
+            .orbit-value { font-size: 1.1rem; }
+            .orbit-label { font-size: 0.55rem; }
+            .candle-core { padding: 0.3rem 0.8rem; }
+            .candle-line { width: 20px; }
+            .candle-sphere { width: 12px; height: 12px; }
+            .gen-btn { padding: 0.8rem 1rem; font-size: 1rem; }
+            .tg-pill { padding: 0.3rem 1rem; font-size: 0.8rem; }
+            #confidence-value { font-size: 2rem; }
+            .grid-cols-2 { gap: 0.8rem; }
+            .p-6 { padding: 1rem; }
+            .p-7 { padding: 1.2rem; }
+        }
+        @media (max-width: 480px) {
+            .orbit-value { font-size: 0.9rem; }
+            .orbit-label { font-size: 0.5rem; }
+            .candle-orbit { gap: 5px; }
+            .candle-line { width: 15px; }
+            .candle-sphere { width: 10px; height: 10px; }
+            .text-3xl { font-size: 1.5rem; }
+            .text-2xl { font-size: 1.2rem; }
+            .text-xl { font-size: 1rem; }
+            .p-5 { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="neo-card w-full max-w-7xl" id="mainApp" style="filter: blur(0px);">
+    <div class="top-bar flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+            <div class="flex gap-1">
+                <span class="w-2 h-2 rounded-full bg-[#2af] shadow-[0_0_8px_#2af]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#5f6cff]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#b0c0ff]"></span>
+            </div>
+            <div>
+                <span class="text-xl md:text-2xl font-extrabold tracking-tight text-white">APEX<span class="text-[#2af]">PULSE</span></span>
+                <div class="text-[0.55rem] md:text-[0.65rem] uppercase tracking-widest text-[#7fa0dd] font-medium">ai signal engine · v2</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1 live-badge">
+                <span class="relative flex h-1.5 w-1.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span class="text-2xs md:text-xs font-medium" id="api-status-indicator">LOCKED</span>
+            </div>
+            <div class="text-2xs md:text-xs font-mono bg-[#0f1f35] py-1.5 px-3 md:py-2 md:px-5 rounded-full border border-[#2a4f80]">
+                <i class="far fa-clock mr-1 text-[#2af]"></i><span id="current-time">--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-7">
+        <div class="lg:col-span-2 space-y-4 md:space-y-5">
+            <div>
+                <div class="text-2xs md:text-xs font-semibold text-[#7f9fcc] uppercase tracking-wider mb-1 md:mb-2 flex items-center gap-1"><i class="fas fa-magnifying-glass text-[#2af]"></i> ASSET EXPLORER</div>
+                <div class="search-float flex items-center">
+                    <i class="fas fa-search text-[#2af] mr-2 md:mr-3 text-xs md:text-sm"></i>
+                    <input type="text" id="pair-search" placeholder="Search pair, group or symbol..." class="w-full bg-transparent border-0 text-white placeholder:text-[#6080aa] text-xs md:text-sm focus:outline-none py-2 md:py-3">
+                    <button id="clear-search" class="ml-2 text-[#6080aa] hover:text-white transition"><i class="fas fa-times-circle"></i></button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] md:max-h-[360px] overflow-y-auto pr-1 scroll-modern" id="pairs-container"></div>
+        </div>
+
+        <div class="space-y-4 md:space-y-5">
+            <div class="bg-[#0f1f33] border border-[#1f3f66] rounded-2xl md:rounded-3xl p-4 md:p-5">
+                <div class="text-2xs md:text-xs text-[#8aacdd] flex items-center gap-1 mb-2"><i class="fas fa-hourglass-half text-[#2af]"></i> EXPIRY</div>
+                <select id="duration-select" class="w-full bg-[#0a1a2f] border border-[#2a4f80] text-white rounded-xl md:rounded-2xl py-2.5 md:py-3.5 px-3 md:px-5 text-xs md:text-sm focus:border-[#2af] focus:ring-2 focus:ring-[#2af]/30">
+                    <option value="1 Minute">⏱️ 1 Minute</option>
+                    <option value="5 Minutes">⏱️ 5 Minutes</option>
+                </select>
+            </div>
+
+            <div class="bg-[#0f1f33] border border-[#1f3f66] rounded-2xl md:rounded-3xl p-4 md:p-5 flex justify-between items-center">
+                <div>
+                    <div class="text-2xs md:text-xs text-[#8aacdd]">CURRENT</div>
+                    <div class="text-xl md:text-3xl font-bold text-white" id="selected-pair-display">EUR/USD</div>
+                </div>
+                <div class="bg-[#0a2a40] py-1 md:py-1.5 px-3 md:px-4 rounded-full border border-[#2af]">
+                    <span class="text-2xs md:text-xs font-medium text-[#9fc8ff]" id="selected-status">active</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 md:gap-4">
+                <div class="bg-[#0f1f33] border border-[#1f3f66] rounded-2xl md:rounded-3xl p-3 md:p-5">
+                    <div class="text-2xs md:text-xs text-[#8aacdd]">NOW</div>
+                    <div class="text-xl md:text-2xl font-mono font-bold text-white" id="current-time-large">--:--</div>
+                </div>
+                <div class="bg-gradient-to-br from-[#1a2f4a] to-[#102236] border border-[#2af]/40 rounded-2xl md:rounded-3xl p-3 md:p-5">
+                    <div class="text-2xs md:text-xs text-[#aac9ff]">TRADE</div>
+                    <div class="text-xl md:text-2xl font-mono font-bold text-[#9fc8ff]" id="future-trade-time">--:--</div>
+                </div>
+            </div>
+
+            <button id="generate-button" class="gen-btn w-full text-white text-base md:text-lg font-extrabold flex items-center justify-center gap-2">
+                <i class="fas fa-bolt text-xl md:text-2xl"></i> <span>GENERATE SIGNAL</span>
+            </button>
+
+            <div class="text-2xs md:text-xs text-center text-[#6080aa] bg-[#0a1a2f]/70 py-3 md:py-4 rounded-xl md:rounded-2xl border border-[#2a4f80]/30">
+                <i class="fas fa-microchip mr-1 text-[#2af]"></i> New QUOTEX logic · New API Server
+            </div>
+        </div>
+    </div>
+
+    <div id="signal-output" class="mx-4 md:mx-6 lg:mx-8 mb-6 md:mb-8 p-5 md:p-7 bg-[#0b1b30] backdrop-blur-sm border border-[#2af]/30 rounded-3xl md:rounded-4xl hidden opacity-0 transition-opacity duration-300" style="border-radius: 36px;">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-4 md:mb-6">
+            <div class="flex items-center gap-2">
+                <div class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#2af] animate-pulse"></div>
+                <h2 class="text-lg md:text-2xl font-bold text-white">analysis <span class="text-[#2af]">insight</span></h2>
+            </div>
+            <a href="https://t.me/jummuubot" target="_blank" class="tg-pill flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                <i class="fab fa-telegram text-[#2af] text-base md:text-lg"></i> @jummuubot
+            </a>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+            <div class="bg-[#0a1a30]/80 p-2 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><div class="text-2xs md:text-xs text-[#8aacdd]">PAIR</div><div class="text-sm md:text-xl font-bold text-white" id="output-pair">EUR/USD</div></div>
+            <div class="bg-[#0a1a30]/80 p-2 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><div class="text-2xs md:text-xs text-[#8aacdd]">EXPIRY</div><div class="text-sm md:text-xl font-bold text-white" id="output-duration">1 Min</div></div>
+            <div class="bg-[#0a1a30]/80 p-2 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><div class="text-2xs md:text-xs text-[#8aacdd]">DIRECTION</div><div><span id="output-direction" class="signal-chip call text-xs md:text-sm">CALL</span></div></div>
+            <div class="bg-[#0a1a30]/80 p-2 md:p-4 rounded-xl md:rounded-2xl border border-white/5"><div class="text-2xs md:text-xs text-[#8aacdd]">TRADE TIME</div><div class="text-sm md:text-xl font-bold text-white" id="output-trade-time">--:--</div></div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 md:gap-6">
+            <div class="md:col-span-2 bg-[#0a1a30]/60 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-[#1f3f66]">
+                <div class="text-2xs md:text-xs text-[#8aacdd] mb-3 md:mb-4 flex items-center gap-1"><i class="fas fa-satellite text-[#2af]"></i> ORBIT CANDLE · START / END</div>
+
+                <div class="candle-orbit">
+                    <div class="orbit-item">
+                        <span class="orbit-label">OPEN</span>
+                        <span class="orbit-value" id="candle-open">0.0000</span>
+                    </div>
+
+                    <div class="candle-core" id="candle-core-container">
+                        <div class="candle-symbol">
+                            <span id="candle-start-sphere" class="candle-sphere bull"></span>
+                            <span class="candle-line"></span>
+                            <span id="candle-end-sphere" class="candle-sphere bull"></span>
+                        </div>
+                    </div>
+
+                    <div class="orbit-item">
+                        <span class="orbit-label">CLOSE</span>
+                        <span class="orbit-value" id="candle-close">0.0000</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 md:mt-5 flex items-center gap-2 md:gap-4">
+                    <span class="text-2xs md:text-sm text-[#8aacdd]"><i class="fas fa-bolt mr-1"></i>current price</span>
+                    <span class="text-white font-mono text-lg md:text-2xl font-bold" id="output-price">0.0000</span>
+                </div>
+            </div>
+
+            <div class="bg-[#0a1a30]/60 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-[#1f3f66]">
+                <div class="text-2xs md:text-xs text-[#8aacdd] mb-1">CONFIDENCE</div>
+                <div class="text-2xl md:text-4xl font-bold text-white" id="confidence-value">0%</div>
+                <div class="bar-bg w-full mt-2 md:mt-3 mb-3 md:mb-4">
+                    <div class="bar-fill" id="confidence-bar" style="width:0%"></div>
+                </div>
+                <div class="text-2xs md:text-xs text-[#8aacdd] flex items-center gap-1 mt-2"><i class="fas fa-newspaper text-[#2af]"></i> QUICK NEWS</div>
+                <div id="news-section" class="hidden mt-1">
+                    <div id="news-content" class="text-2xs md:text-xs text-[#bfd9ff] space-y-1 max-h-16 overflow-auto scroll-modern"></div>
+                </div>
+                <div id="no-news-placeholder" class="text-2xs md:text-xs text-[#6080aa]">no recent headlines</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-indicator" class="mx-4 md:mx-6 lg:mx-8 mb-6 md:mb-8 p-6 md:p-8 bg-[#0a1a30]/80 backdrop-blur-sm rounded-3xl md:rounded-4xl border border-[#2af]/30 hidden flex-col items-center gap-3" style="border-radius: 40px;">
+        <div class="spinner-blue"></div>
+        <p class="text-sm md:text-base text-[#9fc8ff] font-semibold">AI analysing candles & momentum ...</p>
+        <p class="text-2xs md:text-xs text-[#6080aa]">New API server, New QUOTEX Logic</p>
+    </div>
+
+    <div id="error-message" class="mx-4 md:mx-6 lg:mx-8 mb-6 md:mb-8 p-4 md:p-6 bg-rose-950/50 border border-rose-700/70 rounded-2xl md:rounded-3xl hidden items-center gap-2 md:gap-3">
+        <i class="fas fa-circle-exclamation text-rose-400 text-base md:text-xl"></i>
+        <span class="text-rose-200 text-xs md:text-sm">API connection error. Please try again.</span>
+    </div>
+
+    <div class="border-t border-white/5 px-4 md:px-8 py-4 md:py-5 flex justify-between text-2xs md:text-xs text-[#6080aa]">
+        <span>© 2026 apex pulse · ai signals</span>
+        <span class="text-[#2af]">unique orbit candle</span>
+    </div>
+</div>
+
+<div id="lockModal" class="lock-modal">
+    <div class="lock-card">
+        <i class="fas fa-lock text-5xl text-[#2af] mb-3"></i>
+        <h2 class="text-2xl font-bold text-white mb-1">VIP ACCESS REQUIRED</h2>
+        <p class="text-[#8aacdd] text-sm mb-4">Enter password to unlock real API signals</p>
+        <input type="password" id="vipPassword" class="password-input" placeholder="••••••" autocomplete="off">
+        <a href="https://t.me/jummuubot/513" target="_blank" class="vip-link block text-center bg-[#1a3455]"><i class="fab fa-telegram mr-2"></i> 🔑 GET PASSWORD → JOIN VIP CHANNEL</a>
+        <button id="unlockBtn" class="unlock-btn py-3 text-white font-bold transition"><i class="fas fa-key mr-2"></i> UNLOCK TERMINAL</button>
+        <div id="wrongPassMsg" class="text-rose-400 text-xs mt-3 hidden">❌ Invalid password | access denied</div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let sessionToken = null;
+    let vipPassword = '';
+    let isUnlocked = false;
+    let selectedPair = 'EURUSD';
+    let tradingPairs = [];
+    let currentSearchTerm = '';
+
+    // DOM elements
+    const generateBtn = document.getElementById('generate-button');
+    const pairsContainer = document.getElementById('pairs-container');
+    const pairSearch = document.getElementById('pair-search');
+    const clearSearch = document.getElementById('clear-search');
+    const signalOutput = document.getElementById('signal-output');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const errorMsgDiv = document.getElementById('error-message');
+    const apiStatusSpan = document.getElementById('api-status-indicator');
+    const futureSpan = document.getElementById('future-trade-time');
+    const selectedPairDisplay = document.getElementById('selected-pair-display');
+    const selectedStatus = document.getElementById('selected-status');
+    const outPair = document.getElementById('output-pair');
+    const outDuration = document.getElementById('output-duration');
+    const outDirectionSpan = document.getElementById('output-direction');
+    const outTradeTimeSpan = document.getElementById('output-trade-time');
+    const outPriceSpan = document.getElementById('output-price');
+    const candleOpenSpan = document.getElementById('candle-open');
+    const candleCloseSpan = document.getElementById('candle-close');
+    const candleStartSphere = document.getElementById('candle-start-sphere');
+    const candleEndSphere = document.getElementById('candle-end-sphere');
+    const confidenceValSpan = document.getElementById('confidence-value');
+    const confidenceBarDiv = document.getElementById('confidence-bar');
+    const newsSection = document.getElementById('news-section');
+    const newsContentDiv = document.getElementById('news-content');
+    const noNewsPlaceholder = document.getElementById('no-news-placeholder');
+    const lockModal = document.getElementById('lockModal');
+    const mainApp = document.getElementById('mainApp');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const passInput = document.getElementById('vipPassword');
+    const wrongMsg = document.getElementById('wrongPassMsg');
+
+    // Time utils
+    const formatTime = (d) => `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    function updateFuture() { let f = new Date(); f.setMinutes(f.getMinutes()+1); futureSpan.textContent = formatTime(f); return f; }
+    function updateClock() { let n = new Date(); document.getElementById('current-time').textContent = formatTime(n); document.getElementById('current-time-large').textContent = formatTime(n); }
+    setInterval(updateClock, 1000);
+    setInterval(updateFuture, 1000);
+
+    function getFilteredPairs() {
+        if (!currentSearchTerm) return tradingPairs;
+        return tradingPairs.filter(p =>
+            p.label.toLowerCase().includes(currentSearchTerm) ||
+            p.value.toLowerCase().includes(currentSearchTerm) ||
+            p.group.toLowerCase().includes(currentSearchTerm)
+        );
+    }
+
+    // Load pairs from backend
+    async function loadPairs() {
+        try {
+            const response = await fetch('/api/pairs');
+            const data = await response.json();
+            if (data.success && data.pairs) {
+                tradingPairs = data.pairs;
+                renderPairs();
+                selectPair('EURUSD');
+            }
+        } catch (error) {
+            console.error('Failed to load pairs:', error);
+        }
+    }
+
+    function renderPairs() {
+        if (!pairsContainer) return;
+        const filtered = getFilteredPairs();
+        pairsContainer.innerHTML = '';
+        filtered.forEach(pair => {
+            let div = document.createElement('div');
+            div.className = `asset-tile ${selectedPair === pair.value ? 'selected' : ''}`;
+            div.innerHTML = `<div class="font-semibold text-white text-sm md:text-base">${pair.label}</div>
+                            <div class="text-2xs md:text-xs text-[#7f9fcc] mt-0.5">${pair.group}</div>`;
+            div.addEventListener('click', () => { if(isUnlocked) selectPair(pair.value); });
+            pairsContainer.appendChild(div);
+        });
+    }
+
+    function selectPair(val) {
+        selectedPair = val;
+        let found = tradingPairs.find(p=>p.value===val);
+        if(found) selectedPairDisplay.textContent = found.label;
+        renderPairs();
+    }
+
+    if(pairSearch) {
+        pairSearch.addEventListener('input', (e)=>{
+            currentSearchTerm = e.target.value.toLowerCase();
+            renderPairs();
+        });
+    }
+
+    if(clearSearch) {
+        clearSearch.addEventListener('click', ()=>{
+            pairSearch.value = '';
+            currentSearchTerm = '';
+            renderPairs();
+        });
+    }
+
+    async function verifyPassword(password) {
+        if (!password || password === '') {
+            wrongMsg.classList.remove('hidden');
+            wrongMsg.innerText = '❌ Please enter password';
+            setTimeout(() => wrongMsg.classList.add('hidden'), 2000);
+            return false;
+        }
+
+
+        unlockBtn.classList.add('loading');
+        unlockBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> VERIFYING...';
+
+        try {
+            const response = await fetch('/api/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                sessionToken = data.token;
+                vipPassword = password;
+                isUnlocked = true;
+                lockModal.style.display = 'none';
+                mainApp.style.filter = 'none';
+                apiStatusSpan.innerText = 'READY';
+                selectPair(selectedPair);
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-emerald-800 text-white px-5 py-2 rounded-full text-sm z-50';
+                toast.innerHTML = '✅ VIP UNLOCKED · REAL API SIGNALS';
+                document.body.appendChild(toast);
+                setTimeout(()=>toast.remove(), 2500);
+                return true;
+            } else {
+                wrongMsg.classList.remove('hidden');
+                wrongMsg.innerText = '❌ Invalid password';
+                setTimeout(() => wrongMsg.classList.add('hidden'), 2000);
+                return false;
+            }
+        } catch (error) {
+            wrongMsg.classList.remove('hidden');
+            wrongMsg.innerText = '❌ Network error - please try again';
+            setTimeout(() => wrongMsg.classList.add('hidden'), 2000);
+            return false;
+        } finally {
+            unlockBtn.classList.remove('loading');
+            unlockBtn.innerHTML = '<i class="fas fa-key mr-2"></i> UNLOCK TERMINAL';
+        }
+    }
+
+    async function generateSignal() {
+        if(!isUnlocked) {
+            errorMsgDiv.classList.remove('hidden');
+            errorMsgDiv.querySelector('span').innerHTML = 'market is off now';
+            return;
+        }
+
+        if(!selectedPair) return;
+
+        generateBtn.disabled = true;
+        generateBtn.classList.add('loading');
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>FETCHING DATA';
+        loadingIndicator.classList.remove('hidden');
+        signalOutput.classList.add('hidden');
+        errorMsgDiv.classList.add('hidden');
+        apiStatusSpan.innerText = 'FETCH';
+
+        const duration = document.getElementById('duration-select').value;
+        const future = updateFuture();
+
+        try {
+            const response = await fetch('/api/signal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password: vipPassword,
+                    token: sessionToken,
+                    asset: selectedPair,
+                    duration: duration
+                })
+            });
+            const data = await response.json();
+
+            if(data.success && data.signal) {
+                const s = data.signal;
+                outPair.textContent = tradingPairs.find(p=>p.value===s.pair)?.label || s.pair;
+                outDuration.textContent = s.expiry;
+                outTradeTimeSpan.textContent = s.tradeTime || formatTime(future);
+                outPriceSpan.textContent = s.price;
+                candleOpenSpan.textContent = s.open;
+                candleCloseSpan.textContent = s.close;
+
+                outDirectionSpan.textContent = s.direction;
+                outDirectionSpan.className = 'signal-chip ' + (s.direction === 'CALL' ? 'call' : (s.direction === 'PUT' ? 'put' : 'neutral'));
+
+                if(s.bull) {
+                    candleStartSphere.className = 'candle-sphere bull';
+                    candleEndSphere.className = 'candle-sphere bull';
+                } else {
+                    candleStartSphere.className = 'candle-sphere bear';
+                    candleEndSphere.className = 'candle-sphere bear';
+                }
+
+                confidenceValSpan.textContent = s.confidence + '%';
+                confidenceBarDiv.style.width = s.confidence + '%';
+                noNewsPlaceholder.innerHTML = '📡 live market data';
+
+                signalOutput.classList.remove('hidden');
+                signalOutput.classList.add('opacity-100');
+                errorMsgDiv.classList.add('hidden');
+                apiStatusSpan.innerText = 'LIVE';
+                if(selectedStatus) selectedStatus.innerText = 'API ready';
+            } else {
+                errorMsgDiv.classList.remove('hidden');
+                apiStatusSpan.innerText = 'ERROR';
+            }
+        } catch(e) {
+            errorMsgDiv.classList.remove('hidden');
+            apiStatusSpan.innerText = 'ERROR';
+            console.error('Signal error:', e);
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.classList.remove('loading');
+            generateBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i>GENERATE SIGNAL';
+            loadingIndicator.classList.add('hidden');
+        }
+    }
+
+    if(unlockBtn) {
+        unlockBtn.addEventListener('click', () => {
+            const pwd = passInput.value;
+            verifyPassword(pwd);
+            passInput.value = '';
+        });
+    }
+
+    if(generateBtn) generateBtn.addEventListener('click', generateSignal);
+    if(passInput) {
+        passInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                verifyPassword(e.target.value);
+                e.target.value = '';
+            }
+        });
+    }
+
+    // Initialize
+    loadPairs();
+    updateClock();
+    updateFuture();
+    mainApp.style.filter = 'blur(3px)';
+
+
+    document.addEventListener('contextmenu', e=>e.preventDefault());
+    document.addEventListener('keydown', e=>{ if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key))||(e.ctrlKey&&e.key==='U')) e.preventDefault(); });
+})();
+</script>
+</body>
+</html>
